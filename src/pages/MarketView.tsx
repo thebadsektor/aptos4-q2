@@ -130,10 +130,18 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
   const paginatedNfts = nfts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div style={{ padding: "30px 0", textAlign: "center" }}>
-      <Title level={2}>Marketplace</Title>
-
-      <div style={{ padding: '20px', textAlign: 'center' }}>
+    <div
+      style={{
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <Title level={2} style={{ marginBottom: "20px" }}>Marketplace</Title>
+  
+      {/* Filter Buttons */}
+      <div style={{ marginBottom: "20px" }}>
         <Radio.Group
           value={rarity}
           onChange={(e) => {
@@ -150,13 +158,35 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
           <Radio.Button value={4}>Super Rare</Radio.Button>
         </Radio.Group>
       </div>
-
-      <Row gutter={[24, 24]} justify="center" style={{ marginTop: 40, maxWidth: "100%" }}>
+  
+      {/* Card Grid */}
+      <Row
+        gutter={[24, 24]}
+        style={{
+          marginTop: 20,
+          width: "100%",
+          display: "flex",
+          justifyContent: "center", // Center row content
+          flexWrap: "wrap",
+        }}
+      >
         {paginatedNfts.map((nft) => (
-          <Col key={nft.id} xs={24} sm={12} md={8} lg={6} xl={6}>
+          <Col
+            key={nft.id}
+            xs={24} sm={12} md={8} lg={6} xl={6}
+            style={{
+              display: "flex",
+              justifyContent: "center", // Center the single card horizontally
+              alignItems: "center", // Center content in both directions
+            }}
+          >
             <Card
               hoverable
-              style={{ width: 240, margin: "0 auto" }}
+              style={{
+                width: "100%", // Make the card responsive
+                maxWidth: "240px", // Limit the card width on larger screens
+                margin: "0 auto",
+              }}
               cover={<img alt={nft.name} src={nft.uri} />}
               actions={[
                 <Button type="link" onClick={() => handleBuyClick(nft)}>
@@ -164,22 +194,26 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
                 </Button>
               ]}
             >
-              <Tag color={rarityColors[nft.rarity]} style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "10px" }}>
+              {/* Rarity Tag */}
+              <Tag
+                color={rarityColors[nft.rarity]}
+                style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "10px" }}
+              >
                 {rarityLabels[nft.rarity]}
               </Tag>
-              
+  
               <Meta title={nft.name} description={`Price: ${nft.price} APT`} />
               <p>{nft.description}</p>
               <p>ID: {nft.id}</p>
               <p>Owner: {truncateAddress(nft.owner)}</p>
-              
               <p style={{ margin: "10px 0" }}>For Sale: {nft.for_sale ? "Yes" : "No"}</p>
             </Card>
           </Col>
         ))}
       </Row>
-
-      <div style={{ marginTop: 20 }}>
+  
+      {/* Pagination */}
+      <div style={{ marginTop: 30, marginBottom: 30 }}>
         <Pagination
           current={currentPage}
           pageSize={pageSize}
@@ -188,7 +222,7 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
           style={{ display: "flex", justifyContent: "center" }}
         />
       </div>
-
+  
       {/* Buy Modal */}
       <Modal
         title="Purchase NFT"
