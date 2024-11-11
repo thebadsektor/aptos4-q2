@@ -1,12 +1,10 @@
-// src/components/NavBar.tsx
-
 import React, { useEffect, useState } from "react";
-import { Layout, Typography, Menu, Space, Button } from "antd";
+import { Layout, Typography, Menu, Space, Button, Dropdown, message } from "antd";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { AptosClient } from "aptos";
-import { AccountBookOutlined } from "@ant-design/icons";
+import { AccountBookOutlined, DownOutlined, LogoutOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 
 const { Header } = Layout;
@@ -19,7 +17,7 @@ interface NavBarProps {
 }
 
 const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
-  const { connected, account, network } = useWallet();
+  const { connected, account, network, disconnect } = useWallet(); // Add disconnect here
   const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
@@ -47,6 +45,17 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
     }
   }, [account, connected]);
 
+  const handleLogout = async () => {
+    try {
+      await disconnect(); // Disconnect the wallet
+      setBalance(null); // Clear balance on logout
+      message.success("Disconnected from wallet");
+    } catch (error) {
+      console.error("Error disconnecting wallet:", error);
+      message.error("Failed to disconnect from wallet");
+    }
+  };
+
   return (
     <Header
       style={{
@@ -71,24 +80,34 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
   
       <Space style={{ alignItems: "center" }}>
         {connected && account ? (
-          <Menu theme="dark" mode="horizontal" style={{ backgroundColor: "#001529" }} selectable={false}>
-            <Menu.Item key="address" icon={<AccountBookOutlined />}>
-              <Text style={{ color: "#fff" }}>Account: {account.address}</Text>
-            </Menu.Item>
-            <Menu.Item key="network">
-              <Text style={{ color: "#fff" }}>Network: {network ? network.name : "Unknown"}</Text>
-            </Menu.Item>
-            <Menu.Item key="balance">
-              <Text style={{ color: "#fff" }}>Balance: {balance !== null ? `${balance} APT` : "Loading..."}</Text>
-            </Menu.Item>
-            <Menu.Item key="mint">
-              <Button type="primary" onClick={onMintNFTClick}>Mint NFT</Button>
-            </Menu.Item>
-          </Menu>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item key="address">
+                  <Text strong>Address:</Text> <br />
+                  <Text copyable>{account.address}</Text>
+                </Menu.Item>
+                <Menu.Item key="network">
+                  <Text strong>Network:</Text> {network ? network.name : "Unknown"}
+                </Menu.Item>
+                <Menu.Item key="balance">
+                  <Text strong>Balance:</Text> {balance !== null ? `${balance} APT` : "Loading..."}
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
+                  Log Out
+                </Menu.Item>
+              </Menu>
+            }
+            trigger={['click']}
+          >
+            <Button type="primary">
+              Connected <DownOutlined />
+            </Button>
+          </Dropdown>
         ) : (
-          <Text style={{ color: "#fff" }}>No wallet connected</Text>
+          <WalletSelector />
         )}
-        <WalletSelector />
       </Space>
     </Header>
   );
