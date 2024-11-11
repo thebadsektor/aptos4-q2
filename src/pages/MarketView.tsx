@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Typography, Radio, message, Card, Row, Col, Pagination } from "antd";
 import { AptosClient } from "aptos";
 
-const { Text } = Typography;
+const { Title } = Typography;
+const { Meta } = Card;
 
 const client = new AptosClient("https://fullnode.testnet.aptoslabs.com/v1");
 
@@ -71,7 +72,9 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
   const paginatedNfts = nfts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div>
+    <div style={{ padding: "30px 0", textAlign: "center" }}>
+      <Title level={2}>Marketplace</Title>
+
       {/* Radio Buttons for Rarity Selection */}
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <Radio.Group
@@ -92,32 +95,32 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
       </div>
 
       {/* Display NFT Cards */}
-      <Row gutter={[16, 16]} style={{ padding: '20px' }}>
-        {paginatedNfts.map((nft, index) => (
-          <Col span={6} key={index}>
+      <Row gutter={[24, 24]} justify="center" style={{ marginTop: 40, maxWidth: "100%" }}>
+        {paginatedNfts.map((nft) => (
+          <Col key={nft.id} xs={24} sm={12} md={8} lg={6} xl={6}>
             <Card
               hoverable
+              style={{ width: 240, margin: "0 auto" }}
               cover={<img alt={nft.name} src={nft.uri} />}
-              title={nft.name}
             >
+              <Meta title={nft.name} description={`Rarity: ${nft.rarity}, Price: ${nft.price} APT`} />
               <p>ID: {nft.id}</p>
               <p>Owner: {nft.owner}</p>
-              <p>Description: {nft.description}</p>
-              <p>Price: {nft.price} APT</p>
-              <p>For Sale: {nft.for_sale ? "Yes" : "No"}</p>
-              <p>Rarity: {nft.rarity}</p>
+              <p>{nft.description}</p>
+              <p style={{ margin: "10px 0" }}>For Sale: {nft.for_sale ? "Yes" : "No"}</p>
             </Card>
           </Col>
         ))}
       </Row>
 
       {/* Pagination Component */}
-      <div style={{ textAlign: 'center', padding: '20px' }}>
+      <div style={{ marginTop: 20 }}>
         <Pagination
           current={currentPage}
           pageSize={pageSize}
           total={nfts.length}
           onChange={(page) => setCurrentPage(page)}
+          style={{ display: "flex", justifyContent: "center" }}
         />
       </div>
     </div>
