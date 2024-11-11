@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Typography, Radio, message, Card, Row, Col, Pagination, Tag } from "antd";
+import { Typography, Radio, message, Card, Row, Col, Pagination, Tag, Button, Modal } from "antd";
 import { AptosClient } from "aptos";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
 
 const { Title } = Typography;
 const { Meta } = Card;
@@ -22,12 +23,11 @@ interface MarketViewProps {
   marketplaceAddr: string;
 }
 
-// Define colors and labels for rarity levels
 const rarityColors: { [key: number]: string } = {
-  1: "green",   // Common
-  2: "blue",    // Uncommon
-  3: "purple",  // Rare
-  4: "orange",  // Super Rare
+  1: "green",
+  2: "blue",
+  3: "purple",
+  4: "orange",
 };
 
 const rarityLabels: { [key: number]: string } = {
@@ -37,16 +37,19 @@ const rarityLabels: { [key: number]: string } = {
   4: "Super Rare",
 };
 
-// Helper function to truncate the address
 const truncateAddress = (address: string, start = 6, end = 4) => {
   return `${address.slice(0, start)}...${address.slice(-end)}`;
 };
 
 const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
+  const { signAndSubmitTransaction } = useWallet();
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [rarity, setRarity] = useState<'all' | number>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
+
+  const [isBuyModalVisible, setIsBuyModalVisible] = useState(false);
+  const [selectedNft, setSelectedNft] = useState<NFT | null>(null);
 
   useEffect(() => {
     handleFetchNfts(undefined);
@@ -73,7 +76,7 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
         name: new TextDecoder().decode(hexToUint8Array(nft.name.slice(2))),
         description: new TextDecoder().decode(hexToUint8Array(nft.description.slice(2))),
         uri: new TextDecoder().decode(hexToUint8Array(nft.uri.slice(2))),
-        price: nft.price / 100000000, // Convert from octas to APT
+        price: nft.price / 100000000,
       }));
 
       const filteredNfts = selectedRarity !== undefined
@@ -88,13 +91,48 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
     }
   };
 
+  const handleBuyClick = (nft: NFT) => {
+    setSelectedNft(nft);
+    setIsBuyModalVisible(true);
+  };
+
+  const handleCancelBuy = () => {
+    setIsBuyModalVisible(false);
+    setSelectedNft(null);
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!selectedNft) return;
+  
+    try {
+      const priceInOctas = selectedNft.price * 100000000;
+  
+      const entryFunctionPayload = {
+        type: "entry_function_payload",
+        function: `${marketplaceAddr}::NFTMarketplace::purchase_nft`,
+        type_arguments: [],
+        arguments: [marketplaceAddr, selectedNft.id.toString(), priceInOctas.toString()],
+      };
+  
+      const response = await (window as any).aptos.signAndSubmitTransaction(entryFunctionPayload);
+      await client.waitForTransaction(response.hash);
+  
+      message.success("NFT purchased successfully!");
+      setIsBuyModalVisible(false);
+      handleFetchNfts(rarity === 'all' ? undefined : rarity); // Refresh NFT list
+      console.log("signAndSubmitTransaction:", signAndSubmitTransaction);
+    } catch (error) {
+      console.error("Error purchasing NFT:", error);
+      message.error("Failed to purchase NFT.");
+    }
+  };
+
   const paginatedNfts = nfts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div style={{ padding: "30px 0", textAlign: "center" }}>
       <Title level={2}>Marketplace</Title>
 
-      {/* Radio Buttons for Rarity Selection */}
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <Radio.Group
           value={rarity}
@@ -113,7 +151,6 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
         </Radio.Group>
       </div>
 
-      {/* Display NFT Cards */}
       <Row gutter={[24, 24]} justify="center" style={{ marginTop: 40, maxWidth: "100%" }}>
         {paginatedNfts.map((nft) => (
           <Col key={nft.id} xs={24} sm={12} md={8} lg={6} xl={6}>
@@ -121,11 +158,16 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
               hoverable
               style={{ width: 240, margin: "0 auto" }}
               cover={<img alt={nft.name} src={nft.uri} />}
+              actions={[
+                <Button type="link" onClick={() => handleBuyClick(nft)}>
+                  Buy
+                </Button>
+              ]}
             >
-              {/* Rarity Tag */}
               <Tag color={rarityColors[nft.rarity]} style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "10px" }}>
                 {rarityLabels[nft.rarity]}
               </Tag>
+              
               <Meta title={nft.name} description={`Price: ${nft.price} APT`} />
               <p>{nft.description}</p>
               <p>ID: {nft.id}</p>
@@ -137,7 +179,6 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
         ))}
       </Row>
 
-      {/* Pagination Component */}
       <div style={{ marginTop: 20 }}>
         <Pagination
           current={currentPage}
@@ -147,6 +188,32 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
           style={{ display: "flex", justifyContent: "center" }}
         />
       </div>
+
+      {/* Buy Modal */}
+      <Modal
+        title="Purchase NFT"
+        visible={isBuyModalVisible}
+        onCancel={handleCancelBuy}
+        footer={[
+          <Button key="cancel" onClick={handleCancelBuy}>
+            Cancel
+          </Button>,
+          <Button key="confirm" type="primary" onClick={handleConfirmPurchase}>
+            Confirm Purchase
+          </Button>,
+        ]}
+      >
+        {selectedNft && (
+          <>
+            <p><strong>NFT ID:</strong> {selectedNft.id}</p>
+            <p><strong>Name:</strong> {selectedNft.name}</p>
+            <p><strong>Description:</strong> {selectedNft.description}</p>
+            <p><strong>Rarity:</strong> {rarityLabels[selectedNft.rarity]}</p>
+            <p><strong>Price:</strong> {selectedNft.price} APT</p>
+            <p><strong>Owner:</strong> {truncateAddress(selectedNft.owner)}</p>
+          </>
+        )}
+      </Modal>
     </div>
   );
 };
