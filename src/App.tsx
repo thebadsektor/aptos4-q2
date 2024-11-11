@@ -24,7 +24,6 @@ type NFT = {
 };
 
 function App() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { connected, account, network, signAndSubmitTransaction } = useWallet();
   const [balance, setBalance] = useState<number | null>(null);
   const [nfts, setNfts] = useState<NFT[]>([]);
@@ -61,32 +60,30 @@ function App() {
     }
   }, [account, connected]);
 
+  // Helper function to convert hex to Uint8Array
+  function hexToUint8Array(hexString: string): Uint8Array {
+    const bytes = new Uint8Array(hexString.length / 2);
+    for (let i = 0; i < hexString.length; i += 2) {
+      bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
+    }
+    return bytes;
+  }
+
   const handleMintNFTClick = () => setIsModalVisible(true);
 
   const handleMintNFT = async (values: { name: string; description: string; uri: string; rarity: number }) => {
     try {
-      console.log("Function called with values:", values); // Log the input values
       // Validate input data
       if (!values.name || !values.description || !values.uri || values.rarity === undefined) {
-        console.error("Validation failed: Missing required fields");
         message.error("All fields (Name, Description, URI, and Rarity) are required.");
-        return; // Exit the function if validation fails
+        return;
       }
 
-      console.log("Input validation passed");
-
-      // Step 3: Prepare transaction payload
-      // Convert name, description, and URI to byte arrays
+      // Prepare transaction payload
       const nameVector = Array.from(new TextEncoder().encode(values.name));
       const descriptionVector = Array.from(new TextEncoder().encode(values.description));
       const uriVector = Array.from(new TextEncoder().encode(values.uri));
 
-      console.log("Encoded name:", nameVector);
-      console.log("Encoded description:", descriptionVector);
-      console.log("Encoded URI:", uriVector);
-      console.log("Rarity:", values.rarity);
-
-      // Step 4: Build the transaction payload
       const entryFunctionPayload = {
         type: "entry_function_payload",
         function: `${marketplaceAddr}::NFTMarketplace::mint_nft`,
@@ -94,21 +91,12 @@ function App() {
         arguments: [nameVector, descriptionVector, uriVector, values.rarity],
       };
 
-      console.log("Transaction Payload:", entryFunctionPayload);
-
-      // Step 5: Send the transaction using window.aptos
-      console.log("Submitting transaction...");
       const txnResponse = await (window as any).aptos.signAndSubmitTransaction(entryFunctionPayload);
-      console.log("Transaction response:", txnResponse);
-
-      // Wait for transaction confirmation
       await client.waitForTransaction(txnResponse.hash);
-      console.log("Transaction confirmed");
 
       message.success("NFT minted successfully!");
       setIsModalVisible(false);
       handleFetchNfts(undefined); // Refresh NFT list
-
     } catch (error) {
       console.error("Error minting NFT:", error);
       message.error("Failed to mint NFT.");
@@ -122,13 +110,22 @@ function App() {
         "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d::NFTMarketplace::Marketplace"
       );
       const nftList = (response.data as { nfts: NFT[] }).nfts;
+
+      // Apply decoding to each NFT's fields
+      const decodedNfts = nftList.map((nft) => ({
+        ...nft,
+        name: new TextDecoder().decode(hexToUint8Array(nft.name.slice(2))),
+        description: new TextDecoder().decode(hexToUint8Array(nft.description.slice(2))),
+        uri: new TextDecoder().decode(hexToUint8Array(nft.uri.slice(2))),
+      }));
+
       const filteredNfts = selectedRarity !== undefined
-        ? nftList.filter((nft) => nft.rarity === selectedRarity)
-        : nftList;
+        ? decodedNfts.filter((nft) => nft.rarity === selectedRarity)
+        : decodedNfts;
 
       setNfts(filteredNfts);
       setCurrentPage(1); // Reset to the first page when a new filter is applied
-      message.success(`Fetched NFTs ${selectedRarity ? `with rarity: ${selectedRarity}` : "of all rarities"}`);
+      // message.success(`Fetched NFTs ${selectedRarity ? `with rarity: ${selectedRarity}` : "of all rarities"}`);
     } catch (error) {
       console.error("Error fetching NFTs by rarity:", error);
       message.error("Failed to fetch NFTs.");
