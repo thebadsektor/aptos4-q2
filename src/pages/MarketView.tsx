@@ -205,7 +205,6 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
               <p>{nft.description}</p>
               <p>ID: {nft.id}</p>
               <p>Owner: {truncateAddress(nft.owner)}</p>
-              <p style={{ margin: "10px 0" }}>For Sale: {nft.for_sale ? "Yes" : "No"}</p>
             </Card>
           </Col>
         ))}
