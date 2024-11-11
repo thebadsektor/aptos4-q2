@@ -4,7 +4,7 @@ import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { AptosClient } from "aptos";
-import { Layout, Typography, Menu, Space, Button, Form, Input, message } from "antd";
+import { Layout, Typography, Menu, Space, Button, Form, Input, message, Card, Row, Col } from "antd";
 import { AccountBookOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
@@ -13,21 +13,21 @@ const { Title, Text } = Typography;
 const client = new AptosClient("https://fullnode.testnet.aptoslabs.com/v1");
 
 type NFT = {
-  id: number; // NFT ID
-  owner: string; // Owner address
-  name: string; // NFT name
-  description: string; // NFT description
-  uri: string; // URI for the NFT
-  price: number; // Price of the NFT
-  for_sale: boolean; // Sale status
-  rarity: number; // Rarity level
+  id: number;
+  owner: string;
+  name: string;
+  description: string;
+  uri: string;
+  price: number;
+  for_sale: boolean;
+  rarity: number;
 };
 
 function App() {
   const { connected, account, network } = useWallet();
   const [balance, setBalance] = useState<number | null>(null);
-  const [nfts, setNfts] = useState<NFT[]>([]); // State to hold the fetched NFTs
-  const [rarity, setRarity] = useState<number | undefined>(undefined); // State for rarity input
+  const [nfts, setNfts] = useState<NFT[]>([]);
+  const [rarity, setRarity] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -48,8 +48,7 @@ function App() {
         }
       }
     };
-  
-    // Add a new function to fetch and log resources at the marketplace address
+
     const fetchMarketplaceResources = async () => {
       const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d";
       try {
@@ -59,11 +58,10 @@ function App() {
         console.error("Error fetching marketplace resources:", error);
       }
     };
-  
-    // Call both functions if connected
+
     if (connected) {
       fetchBalance();
-      fetchMarketplaceResources(); // Fetch marketplace resources for debugging
+      fetchMarketplaceResources();
     }
   }, [account, connected]);
 
@@ -81,26 +79,19 @@ function App() {
         marketplaceAddr,
         "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d::NFTMarketplace::Marketplace"
       );
-  
-      // Define a type for the response data structure
       const nftList = (response.data as { nfts: NFT[] }).nfts;
       console.log("All NFTs fetched from marketplace:", nftList);
-      console.log("NFTs before filtering by rarity:", nftList);
-      nftList.forEach((nft) => {
-        console.log(`NFT ID: ${nft.id}, Rarity: ${nft.rarity} (Type: ${typeof nft.rarity})`);
-      });
-      console.log(`Input Rarity: ${rarity} (Type: ${typeof rarity})`);
-      // Filter NFTs by the specified rarity
+
       const filteredNfts = nftList
-      .filter((nft) => nft.rarity === Number(rarity)) // Convert rarity input to a number
-      .map((nft) => ({
-        ...nft,
-        name: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.name.slice(2)))),
-        description: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.description.slice(2)))),
-        uri: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.uri.slice(2)))),
-        price: parseInt(nft.price.toString(), 10),
-      }));
-  
+        .filter((nft) => nft.rarity === Number(rarity))
+        .map((nft) => ({
+          ...nft,
+          name: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.name.slice(2)))),
+          description: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.description.slice(2)))),
+          uri: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.uri.slice(2)))),
+          price: parseInt(nft.price.toString(), 10),
+        }));
+
       console.log("Filtered NFTs by rarity:", filteredNfts);
       return filteredNfts;
     } catch (error) {
@@ -110,7 +101,7 @@ function App() {
   };
 
   const handleFetchNfts = async (values: { rarity: number }) => {
-    const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d"; // Replace with actual marketplace address
+    const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d";
     const fetchedNfts = await getNftsByRarity(marketplaceAddr, values.rarity);
     setNfts(fetchedNfts);
     message.success(`Fetched NFTs with rarity: ${values.rarity}`);
@@ -118,40 +109,19 @@ function App() {
 
   return (
     <Layout>
-      <Header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          backgroundColor: "#001529",
-        }}
-      >
-        <Title level={3} style={{ color: "#fff", margin: 0 }}>
-          Aptos NFT Marketplace
-        </Title>
+      <Header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#001529" }}>
+        <Title level={3} style={{ color: "#fff", margin: 0 }}>Aptos NFT Marketplace</Title>
         <Space>
           {connected && account ? (
-            <Menu
-              theme="dark"
-              mode="horizontal"
-              style={{ backgroundColor: "#001529" }}
-              selectedKeys={[]}
-              defaultSelectedKeys={[]}
-            >
+            <Menu theme="dark" mode="horizontal" style={{ backgroundColor: "#001529" }} selectedKeys={[]} defaultSelectedKeys={[]}>
               <Menu.Item key="address" icon={<AccountBookOutlined />}>
-                <Text style={{ color: "#fff" }}>
-                  Account: {account.address}
-                </Text>
+                <Text style={{ color: "#fff" }}>Account: {account.address}</Text>
               </Menu.Item>
               <Menu.Item key="network">
-                <Text style={{ color: "#fff" }}>
-                  Network: {network ? network.name : "Unknown"}
-                </Text>
+                <Text style={{ color: "#fff" }}>Network: {network ? network.name : "Unknown"}</Text>
               </Menu.Item>
               <Menu.Item key="balance">
-                <Text style={{ color: "#fff" }}>
-                  Balance: {balance !== null ? `${balance} APT` : "Loading..."}
-                </Text>
+                <Text style={{ color: "#fff" }}>Balance: {balance !== null ? `${balance} APT` : "Loading..."}</Text>
               </Menu.Item>
             </Menu>
           ) : (
@@ -162,42 +132,34 @@ function App() {
       </Header>
 
       {/* Form for Fetching NFTs by Rarity */}
-      <Form
-        layout="inline"
-        onFinish={handleFetchNfts}
-        style={{ margin: '20px' }}
-      >
-        <Form.Item
-          name="rarity"
-          rules={[{ required: true, message: 'Please input the rarity!' }]}
-        >
-          <Input
-            type="number"
-            placeholder="Enter rarity (1-3)"
-            onChange={(e) => setRarity(Number(e.target.value))}
-          />
+      <Form layout="inline" onFinish={handleFetchNfts} style={{ margin: '20px' }}>
+        <Form.Item name="rarity" rules={[{ required: true, message: 'Please input the rarity!' }]}>
+          <Input type="number" placeholder="Enter rarity (1-3)" onChange={(e) => setRarity(Number(e.target.value))} />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit">
-            Fetch NFTs
-          </Button>
+          <Button type="primary" htmlType="submit">Fetch NFTs</Button>
         </Form.Item>
       </Form>
 
-      <div>
+      {/* Display NFT Cards */}
+      <Row gutter={[16, 16]} style={{ padding: '20px' }}>
         {nfts.map((nft, index) => (
-          <div key={index}>
-            <h3>{nft.name}</h3>
-            <p>ID: {nft.id}</p>
-            <p>Owner: {nft.owner}</p>
-            <p>Description: {nft.description}</p>
-            <p>URI: {nft.uri}</p>
-            <p>Price: {nft.price} APT</p>
-            <p>For Sale: {nft.for_sale ? "Yes" : "No"}</p>
-            <p>Rarity: {nft.rarity}</p>
-          </div>
+          <Col span={6} key={index}>
+            <Card
+              hoverable
+              cover={<img alt={nft.name} src={nft.uri} />}
+              title={nft.name}
+            >
+              <p>ID: {nft.id}</p>
+              <p>Owner: {nft.owner}</p>
+              <p>Description: {nft.description}</p>
+              <p>Price: {nft.price} APT</p>
+              <p>For Sale: {nft.for_sale ? "Yes" : "No"}</p>
+              <p>Rarity: {nft.rarity}</p>
+            </Card>
+          </Col>
         ))}
-      </div>
+      </Row>
     </Layout>
   );
 }
