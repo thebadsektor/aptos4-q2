@@ -48,3 +48,9 @@ In the project directory, you can run:
 Runs the app in development mode.
 Open `http://localhost:3000` to view it in the browser.
 The page will reload if you make edits, and you will also see any lint errors in the console.
+
+### Sample Data Inputs for Minting:
+
+- Name: Eternal Cascade
+- Description: A waterfall that flows endlessly, reflecting the infinite beauty of nature.
+- https://fastly.picsum.photos/id/572/200/200.jpg?hmac=YFsNUCQc2Dfz_5O0HY8HmDfquz04XrdcpJ0P4Z7plRY
