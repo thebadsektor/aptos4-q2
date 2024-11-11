@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Typography, Card, Row, Col, Pagination, message } from "antd";
+import { Typography, Card, Row, Col, Pagination, message, Button } from "antd";
 import { AptosClient } from "aptos";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { EditOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
 const { Meta } = Card;
@@ -109,9 +110,6 @@ const MyNFTs: React.FC = () => {
   }, [account, marketplaceAddr, currentPage]);
   
   
-  
-  
-
   // Call fetchUserNFTs on component mount and when `account` or `currentPage` changes
   useEffect(() => {
     fetchUserNFTs();
@@ -132,6 +130,11 @@ const MyNFTs: React.FC = () => {
               hoverable
               style={{ width: 240, margin: "0 auto" }}
               cover={<img alt={nft.name} src={nft.uri} />}
+              actions={[
+                <Button type="link">
+                  Sell
+                </Button>
+              ]}
             >
               <Meta title={nft.name} description={`Rarity: ${nft.rarity}, Price: ${nft.price} APT`} />
               <p>ID: {nft.id}</p>
