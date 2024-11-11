@@ -51,6 +51,8 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
     <Header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#001529" }}>
     <img src="/Aptos_Primary_WHT.png" alt="Aptos Logo" style={{ height: "25px", marginRight:0}} />
       {/* <Title level={3} style={{ color: "#fff", margin: 0 }}>NFT Marketplace</Title> */}
+      <Button type="primary">Marketplace</Button>
+      <Button type="primary">My NFTS</Button>
       <Space>
         {connected && account ? (
           <Menu theme="dark" mode="horizontal" style={{ backgroundColor: "#001529" }} selectedKeys={[]} defaultSelectedKeys={[]}>
