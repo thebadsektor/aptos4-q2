@@ -48,19 +48,30 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
   }, [account, connected]);
 
   return (
-    <Header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#001529" }}>
-      <img src="/Aptos_Primary_WHT.png" alt="Aptos Logo" style={{ height: "25px", marginRight: 10 }} />
-      <Space>
-        <Link to="/">
-          <Button type="primary">Marketplace</Button>
-        </Link>
-        <Link to="/my-nfts">
-          <Button type="primary">My Collection</Button>
-        </Link>
-      </Space>
-      <Space>
+    <Header
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        backgroundColor: "#001529",
+        padding: "0 20px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <img src="/Aptos_Primary_WHT.png" alt="Aptos Logo" style={{ height: "30px", marginRight: 16 }} />
+        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={["marketplace"]} style={{ backgroundColor: "#001529" }}>
+          <Menu.Item key="marketplace">
+            <Link to="/" style={{ color: "#fff" }}>Marketplace</Link>
+          </Menu.Item>
+          <Menu.Item key="my-collection">
+            <Link to="/my-nfts" style={{ color: "#fff" }}>My Collection</Link>
+          </Menu.Item>
+        </Menu>
+      </div>
+  
+      <Space style={{ alignItems: "center" }}>
         {connected && account ? (
-          <Menu theme="dark" mode="horizontal" style={{ backgroundColor: "#001529" }} selectedKeys={[]} defaultSelectedKeys={[]}>
+          <Menu theme="dark" mode="horizontal" style={{ backgroundColor: "#001529" }} selectable={false}>
             <Menu.Item key="address" icon={<AccountBookOutlined />}>
               <Text style={{ color: "#fff" }}>Account: {account.address}</Text>
             </Menu.Item>

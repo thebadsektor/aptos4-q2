@@ -131,7 +131,7 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
 
   return (
     <div
-      style={{
+      style={{  
         textAlign: "center",
         display: "flex",
         flexDirection: "column",
