@@ -3,8 +3,8 @@ import "./App.css";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { AptosClient } from "aptos";
-import { Layout, Typography, Menu, Space, Button, Radio, message, Card, Row, Col, Pagination } from "antd";
+import { AptosClient, Types } from "aptos";
+import { Layout, Typography, Menu, Space, Button, Radio, message, Card, Row, Col, Pagination, Modal, Form, Input, Select } from "antd";
 import { AccountBookOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
@@ -24,12 +24,16 @@ type NFT = {
 };
 
 function App() {
-  const { connected, account, network } = useWallet();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { connected, account, network, signAndSubmitTransaction } = useWallet();
   const [balance, setBalance] = useState<number | null>(null);
   const [nfts, setNfts] = useState<NFT[]>([]);
-  const [rarity, setRarity] = useState<'all' | number>('all'); // Set default to 'all'
+  const [rarity, setRarity] = useState<'all' | number>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const pageSize = 8;
+
+  const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d";
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -51,63 +55,84 @@ function App() {
       }
     };
 
-    const fetchMarketplaceResources = async () => {
-      const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d";
-      try {
-        const resources = await client.getAccountResources(marketplaceAddr);
-        console.log("Resources available at marketplace address:", resources);
-      } catch (error) {
-        console.error("Error fetching marketplace resources:", error);
-      }
-    };
-
     if (connected) {
       fetchBalance();
-      fetchMarketplaceResources();
-      handleFetchNfts(undefined); // Fetch all NFTs by default
+      handleFetchNfts(undefined);
     }
   }, [account, connected]);
 
-  function hexToUint8Array(hexString: string): Uint8Array {
-    const bytes = new Uint8Array(hexString.length / 2);
-    for (let i = 0; i < hexString.length; i += 2) {
-      bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
-    }
-    return bytes;
-  }
+  const handleMintNFTClick = () => setIsModalVisible(true);
 
-  const getNftsByRarity = async (marketplaceAddr: string, rarity?: number): Promise<NFT[]> => {
+  const handleMintNFT = async (values: { name: string; description: string; uri: string; rarity: number }) => {
+    try {
+      console.log("Function called with values:", values); // Log the input values
+      // Validate input data
+      if (!values.name || !values.description || !values.uri || values.rarity === undefined) {
+        console.error("Validation failed: Missing required fields");
+        message.error("All fields (Name, Description, URI, and Rarity) are required.");
+        return; // Exit the function if validation fails
+      }
+
+      console.log("Input validation passed");
+
+      // Step 3: Prepare transaction payload
+      // Convert name, description, and URI to byte arrays
+      const nameVector = Array.from(new TextEncoder().encode(values.name));
+      const descriptionVector = Array.from(new TextEncoder().encode(values.description));
+      const uriVector = Array.from(new TextEncoder().encode(values.uri));
+
+      console.log("Encoded name:", nameVector);
+      console.log("Encoded description:", descriptionVector);
+      console.log("Encoded URI:", uriVector);
+      console.log("Rarity:", values.rarity);
+
+      // Step 4: Build the transaction payload
+      const entryFunctionPayload = {
+        type: "entry_function_payload",
+        function: `${marketplaceAddr}::NFTMarketplace::mint_nft`,
+        type_arguments: [],
+        arguments: [nameVector, descriptionVector, uriVector, values.rarity],
+      };
+
+      console.log("Transaction Payload:", entryFunctionPayload);
+
+      // Step 5: Send the transaction using window.aptos
+      console.log("Submitting transaction...");
+      const txnResponse = await (window as any).aptos.signAndSubmitTransaction(entryFunctionPayload);
+      console.log("Transaction response:", txnResponse);
+
+      // Wait for transaction confirmation
+      await client.waitForTransaction(txnResponse.hash);
+      console.log("Transaction confirmed");
+
+      message.success("NFT minted successfully!");
+      setIsModalVisible(false);
+      handleFetchNfts(undefined); // Refresh NFT list
+
+    } catch (error) {
+      console.error("Error minting NFT:", error);
+      message.error("Failed to mint NFT.");
+    }
+  };
+
+  const handleFetchNfts = async (selectedRarity: number | undefined) => {
     try {
       const response = await client.getAccountResource(
         marketplaceAddr,
         "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d::NFTMarketplace::Marketplace"
       );
       const nftList = (response.data as { nfts: NFT[] }).nfts;
-      console.log("All NFTs fetched from marketplace:", nftList);
-
-      const filteredNfts = rarity !== undefined
-        ? nftList.filter((nft) => nft.rarity === rarity)
+      const filteredNfts = selectedRarity !== undefined
+        ? nftList.filter((nft) => nft.rarity === selectedRarity)
         : nftList;
 
-      return filteredNfts.map((nft) => ({
-        ...nft,
-        name: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.name.slice(2)))),
-        description: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.description.slice(2)))),
-        uri: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.uri.slice(2)))),
-        price: parseInt(nft.price.toString(), 10),
-      }));
+      setNfts(filteredNfts);
+      setCurrentPage(1); // Reset to the first page when a new filter is applied
+      message.success(`Fetched NFTs ${selectedRarity ? `with rarity: ${selectedRarity}` : "of all rarities"}`);
     } catch (error) {
       console.error("Error fetching NFTs by rarity:", error);
-      return [];
+      message.error("Failed to fetch NFTs.");
     }
-  };
-
-  const handleFetchNfts = async (selectedRarity: number | undefined) => {
-    const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d";
-    const fetchedNfts = await getNftsByRarity(marketplaceAddr, selectedRarity);
-    setNfts(fetchedNfts);
-    setCurrentPage(1); // Reset to the first page when a new filter is applied
-    message.success(`Fetched NFTs ${selectedRarity ? `with rarity: ${selectedRarity}` : "of all rarities"}`);
   };
 
   const paginatedNfts = nfts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -127,6 +152,9 @@ function App() {
               </Menu.Item>
               <Menu.Item key="balance">
                 <Text style={{ color: "#fff" }}>Balance: {balance !== null ? `${balance} APT` : "Loading..."}</Text>
+              </Menu.Item>
+              <Menu.Item key="mint">
+                <Text style={{ color: "#fff", cursor: "pointer" }} onClick={handleMintNFTClick}>Mint NFT</Text>
               </Menu.Item>
             </Menu>
           ) : (
@@ -148,10 +176,10 @@ function App() {
           buttonStyle="solid"
         >
           <Radio.Button value="all">All</Radio.Button>
-          <Radio.Button value={1}>Common</Radio.Button>
-          <Radio.Button value={2}>Uncommon</Radio.Button>
-          <Radio.Button value={3}>Rare</Radio.Button>
-          <Radio.Button value={4}>Super Rare</Radio.Button>
+          <Radio.Button value={1}>Rarity 1</Radio.Button>
+          <Radio.Button value={2}>Rarity 2</Radio.Button>
+          <Radio.Button value={3}>Rarity 3</Radio.Button>
+          <Radio.Button value={4}>Rarity 4</Radio.Button>
         </Radio.Group>
       </div>
 
@@ -184,6 +212,39 @@ function App() {
           onChange={(page) => setCurrentPage(page)}
         />
       </div>
+
+      {/* Mint NFT Modal */}
+      <Modal
+        title="Mint New NFT"
+        visible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <Form layout="vertical" onFinish={handleMintNFT}>
+          <Form.Item label="Name" name="name" rules={[{ required: true, message: 'Please enter a name!' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Description" name="description" rules={[{ required: true, message: 'Please enter a description!' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="URI" name="uri" rules={[{ required: true, message: 'Please enter a URI!' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Rarity" name="rarity" rules={[{ required: true, message: 'Please select a rarity!' }]}>
+            <Select>
+              <Select.Option value={1}>Common</Select.Option>
+              <Select.Option value={2}>Uncommon</Select.Option>
+              <Select.Option value={3}>Rare</Select.Option>
+              <Select.Option value={4}>Epic</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Mint NFT
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </Layout>
   );
 }
