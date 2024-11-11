@@ -55,7 +55,7 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
           <Button type="primary">Marketplace</Button>
         </Link>
         <Link to="/my-nfts">
-          <Button type="primary">My NFTs</Button>
+          <Button type="primary">My Collection</Button>
         </Link>
       </Space>
       <Space>
