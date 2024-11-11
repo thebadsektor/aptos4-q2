@@ -1,13 +1,11 @@
+// src/App.tsx
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
-import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { AptosClient, Types } from "aptos";
-import { Layout, Typography, Menu, Space, Button, Radio, message, Card, Row, Col, Pagination, Modal, Form, Input, Select } from "antd";
-import { AccountBookOutlined } from "@ant-design/icons";
+import { Typography, Layout, Radio, message, Card, Row, Col, Pagination, Modal, Form, Input, Select, Button } from "antd";
+import NavBar from "./components/NavBar";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
 
-const { Header } = Layout;
 const { Title, Text } = Typography;
 
 const client = new AptosClient("https://fullnode.testnet.aptoslabs.com/v1");
@@ -24,7 +22,7 @@ type NFT = {
 };
 
 function App() {
-  const { connected, account, network, signAndSubmitTransaction } = useWallet();
+  const { connected, account, signAndSubmitTransaction } = useWallet();
   const [balance, setBalance] = useState<number | null>(null);
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [rarity, setRarity] = useState<'all' | number>('all');
@@ -136,31 +134,9 @@ function App() {
 
   return (
     <Layout>
-      <Header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#001529" }}>
-        <Title level={3} style={{ color: "#fff", margin: 0 }}>Aptos NFT Marketplace</Title>
-        <Space>
-          {connected && account ? (
-            <Menu theme="dark" mode="horizontal" style={{ backgroundColor: "#001529" }} selectedKeys={[]} defaultSelectedKeys={[]}>
-              <Menu.Item key="address" icon={<AccountBookOutlined />}>
-                <Text style={{ color: "#fff" }}>Account: {account.address}</Text>
-              </Menu.Item>
-              <Menu.Item key="network">
-                <Text style={{ color: "#fff" }}>Network: {network ? network.name : "Unknown"}</Text>
-              </Menu.Item>
-              <Menu.Item key="balance">
-                <Text style={{ color: "#fff" }}>Balance: {balance !== null ? `${balance} APT` : "Loading..."}</Text>
-              </Menu.Item>
-              <Menu.Item key="mint">
-                <Text style={{ color: "#fff", cursor: "pointer" }} onClick={handleMintNFTClick}>Mint NFT</Text>
-              </Menu.Item>
-            </Menu>
-          ) : (
-            <Text style={{ color: "#fff" }}>No wallet connected</Text>
-          )}
-          <WalletSelector />
-        </Space>
-      </Header>
-
+      {/* Use NavBar Component */}
+      <NavBar onMintNFTClick={handleMintNFTClick} />
+      
       {/* Radio Buttons for Rarity Selection */}
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <Radio.Group
