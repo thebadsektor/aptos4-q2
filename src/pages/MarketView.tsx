@@ -1,7 +1,5 @@
-// src/pages/MarketView.tsx
-
 import React, { useState, useEffect } from "react";
-import { Typography, Radio, message, Card, Row, Col, Pagination } from "antd";
+import { Typography, Radio, message, Card, Row, Col, Pagination, Tag } from "antd";
 import { AptosClient } from "aptos";
 
 const { Title } = Typography;
@@ -23,6 +21,26 @@ type NFT = {
 interface MarketViewProps {
   marketplaceAddr: string;
 }
+
+// Define colors and labels for rarity levels
+const rarityColors: { [key: number]: string } = {
+  1: "green",   // Common
+  2: "blue",    // Uncommon
+  3: "purple",  // Rare
+  4: "orange",  // Super Rare
+};
+
+const rarityLabels: { [key: number]: string } = {
+  1: "Common",
+  2: "Uncommon",
+  3: "Rare",
+  4: "Super Rare",
+};
+
+// Helper function to truncate the address
+const truncateAddress = (address: string, start = 6, end = 4) => {
+  return `${address.slice(0, start)}...${address.slice(-end)}`;
+};
 
 const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
   const [nfts, setNfts] = useState<NFT[]>([]);
@@ -55,6 +73,7 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
         name: new TextDecoder().decode(hexToUint8Array(nft.name.slice(2))),
         description: new TextDecoder().decode(hexToUint8Array(nft.description.slice(2))),
         uri: new TextDecoder().decode(hexToUint8Array(nft.uri.slice(2))),
+        price: nft.price / 100000000, // Convert from octas to APT
       }));
 
       const filteredNfts = selectedRarity !== undefined
@@ -87,10 +106,10 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
           buttonStyle="solid"
         >
           <Radio.Button value="all">All</Radio.Button>
-          <Radio.Button value={1}>Rarity 1</Radio.Button>
-          <Radio.Button value={2}>Rarity 2</Radio.Button>
-          <Radio.Button value={3}>Rarity 3</Radio.Button>
-          <Radio.Button value={4}>Rarity 4</Radio.Button>
+          <Radio.Button value={1}>Common</Radio.Button>
+          <Radio.Button value={2}>Uncommon</Radio.Button>
+          <Radio.Button value={3}>Rare</Radio.Button>
+          <Radio.Button value={4}>Super Rare</Radio.Button>
         </Radio.Group>
       </div>
 
@@ -103,10 +122,15 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
               style={{ width: 240, margin: "0 auto" }}
               cover={<img alt={nft.name} src={nft.uri} />}
             >
-              <Meta title={nft.name} description={`Rarity: ${nft.rarity}, Price: ${nft.price} APT`} />
-              <p>ID: {nft.id}</p>
-              <p>Owner: {nft.owner}</p>
+              {/* Rarity Tag */}
+              <Tag color={rarityColors[nft.rarity]} style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "10px" }}>
+                {rarityLabels[nft.rarity]}
+              </Tag>
+              <Meta title={nft.name} description={`Price: ${nft.price} APT`} />
               <p>{nft.description}</p>
+              <p>ID: {nft.id}</p>
+              <p>Owner: {truncateAddress(nft.owner)}</p>
+              
               <p style={{ margin: "10px 0" }}>For Sale: {nft.for_sale ? "Yes" : "No"}</p>
             </Card>
           </Col>

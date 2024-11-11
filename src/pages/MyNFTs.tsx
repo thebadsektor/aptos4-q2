@@ -96,7 +96,7 @@ const MyNFTs: React.FC = () => {
                 description: new TextDecoder().decode(hexToUint8Array(description.slice(2))),
                 uri: new TextDecoder().decode(hexToUint8Array(uri.slice(2))),
                 rarity,
-                price,
+                price: price / 100000000, // Convert octas to APT
                 for_sale: forSale,
             };
             } catch (error) {
