@@ -11,7 +11,7 @@ import { AptosClient } from "aptos";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 
 const client = new AptosClient("https://fullnode.testnet.aptoslabs.com/v1");
-const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d";
+const marketplaceAddr = "0xb6ce371f31ad716e7aa989f3660f6556f2012b4f27e736beafe798b3c09617aa";
 
 function App() {
   const { signAndSubmitTransaction } = useWallet();
