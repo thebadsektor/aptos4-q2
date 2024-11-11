@@ -4,7 +4,7 @@ import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { AptosClient } from "aptos";
-import { Layout, Typography, Menu, Space, Button, Form, Input, message, Card, Row, Col } from "antd";
+import { Layout, Typography, Menu, Space, Button, Radio, message, Card, Row, Col, Pagination } from "antd";
 import { AccountBookOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
@@ -27,7 +27,9 @@ function App() {
   const { connected, account, network } = useWallet();
   const [balance, setBalance] = useState<number | null>(null);
   const [nfts, setNfts] = useState<NFT[]>([]);
-  const [rarity, setRarity] = useState<number | undefined>(undefined);
+  const [rarity, setRarity] = useState<'all' | number>('all'); // Set default to 'all'
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -62,6 +64,7 @@ function App() {
     if (connected) {
       fetchBalance();
       fetchMarketplaceResources();
+      handleFetchNfts(undefined); // Fetch all NFTs by default
     }
   }, [account, connected]);
 
@@ -72,8 +75,8 @@ function App() {
     }
     return bytes;
   }
-  
-  const getNftsByRarity = async (marketplaceAddr: string, rarity: number): Promise<NFT[]> => {
+
+  const getNftsByRarity = async (marketplaceAddr: string, rarity?: number): Promise<NFT[]> => {
     try {
       const response = await client.getAccountResource(
         marketplaceAddr,
@@ -82,30 +85,32 @@ function App() {
       const nftList = (response.data as { nfts: NFT[] }).nfts;
       console.log("All NFTs fetched from marketplace:", nftList);
 
-      const filteredNfts = nftList
-        .filter((nft) => nft.rarity === Number(rarity))
-        .map((nft) => ({
-          ...nft,
-          name: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.name.slice(2)))),
-          description: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.description.slice(2)))),
-          uri: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.uri.slice(2)))),
-          price: parseInt(nft.price.toString(), 10),
-        }));
+      const filteredNfts = rarity !== undefined
+        ? nftList.filter((nft) => nft.rarity === rarity)
+        : nftList;
 
-      console.log("Filtered NFTs by rarity:", filteredNfts);
-      return filteredNfts;
+      return filteredNfts.map((nft) => ({
+        ...nft,
+        name: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.name.slice(2)))),
+        description: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.description.slice(2)))),
+        uri: new TextDecoder().decode(Uint8Array.from(hexToUint8Array(nft.uri.slice(2)))),
+        price: parseInt(nft.price.toString(), 10),
+      }));
     } catch (error) {
       console.error("Error fetching NFTs by rarity:", error);
       return [];
     }
   };
 
-  const handleFetchNfts = async (values: { rarity: number }) => {
+  const handleFetchNfts = async (selectedRarity: number | undefined) => {
     const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d";
-    const fetchedNfts = await getNftsByRarity(marketplaceAddr, values.rarity);
+    const fetchedNfts = await getNftsByRarity(marketplaceAddr, selectedRarity);
     setNfts(fetchedNfts);
-    message.success(`Fetched NFTs with rarity: ${values.rarity}`);
+    setCurrentPage(1); // Reset to the first page when a new filter is applied
+    message.success(`Fetched NFTs ${selectedRarity ? `with rarity: ${selectedRarity}` : "of all rarities"}`);
   };
+
+  const paginatedNfts = nfts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <Layout>
@@ -131,19 +136,28 @@ function App() {
         </Space>
       </Header>
 
-      {/* Form for Fetching NFTs by Rarity */}
-      <Form layout="inline" onFinish={handleFetchNfts} style={{ margin: '20px' }}>
-        <Form.Item name="rarity" rules={[{ required: true, message: 'Please input the rarity!' }]}>
-          <Input type="number" placeholder="Enter rarity (1-3)" onChange={(e) => setRarity(Number(e.target.value))} />
-        </Form.Item>
-        <Form.Item>
-          <Button type="primary" htmlType="submit">Fetch NFTs</Button>
-        </Form.Item>
-      </Form>
+      {/* Radio Buttons for Rarity Selection */}
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <Radio.Group
+          value={rarity}
+          onChange={(e) => {
+            const selectedRarity = e.target.value;
+            setRarity(selectedRarity);
+            handleFetchNfts(selectedRarity === 'all' ? undefined : selectedRarity);
+          }}
+          buttonStyle="solid"
+        >
+          <Radio.Button value="all">All</Radio.Button>
+          <Radio.Button value={1}>Common</Radio.Button>
+          <Radio.Button value={2}>Uncommon</Radio.Button>
+          <Radio.Button value={3}>Rare</Radio.Button>
+          <Radio.Button value={4}>Super Rare</Radio.Button>
+        </Radio.Group>
+      </div>
 
       {/* Display NFT Cards */}
       <Row gutter={[16, 16]} style={{ padding: '20px' }}>
-        {nfts.map((nft, index) => (
+        {paginatedNfts.map((nft, index) => (
           <Col span={6} key={index}>
             <Card
               hoverable
@@ -160,6 +174,16 @@ function App() {
           </Col>
         ))}
       </Row>
+
+      {/* Pagination Component */}
+      <div style={{ textAlign: 'center', padding: '20px' }}>
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          total={nfts.length}
+          onChange={(page) => setCurrentPage(page)}
+        />
+      </div>
     </Layout>
   );
 }
