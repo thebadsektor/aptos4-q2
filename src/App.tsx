@@ -1,17 +1,20 @@
 // src/App.tsx
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import "./App.css";
 import { Layout, Modal, Form, Input, Select, Button, message } from "antd";
 import NavBar from "./components/NavBar";
 import MarketView from "./pages/MarketView";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import MyNFTs from "./pages/MyNFTs";
 import { AptosClient } from "aptos";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
 
 const client = new AptosClient("https://fullnode.testnet.aptoslabs.com/v1");
 const marketplaceAddr = "0x3eb024cc6f42b296ffc6b519ab89782eaa90c0b90bcc5305eb8f3565360a702d";
 
 function App() {
-  const { account, signAndSubmitTransaction } = useWallet();
+  const { signAndSubmitTransaction } = useWallet();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleMintNFTClick = () => setIsModalVisible(true);
@@ -41,43 +44,48 @@ function App() {
   };
 
   return (
-    <Layout>
-      <NavBar onMintNFTClick={handleMintNFTClick} />
-      <MarketView marketplaceAddr={marketplaceAddr} />
+    <Router>
+      <Layout>
+        <NavBar onMintNFTClick={handleMintNFTClick} />
 
-      {/* Mint NFT Modal */}
-      <Modal
-        title="Mint New NFT"
-        visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={null}
-      >
-        <Form layout="vertical" onFinish={handleMintNFT}>
-          <Form.Item label="Name" name="name" rules={[{ required: true, message: 'Please enter a name!' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="Description" name="description" rules={[{ required: true, message: 'Please enter a description!' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="URI" name="uri" rules={[{ required: true, message: 'Please enter a URI!' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="Rarity" name="rarity" rules={[{ required: true, message: 'Please select a rarity!' }]}>
-            <Select>
-              <Select.Option value={1}>Common</Select.Option>
-              <Select.Option value={2}>Uncommon</Select.Option>
-              <Select.Option value={3}>Rare</Select.Option>
-              <Select.Option value={4}>Epic</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Mint NFT
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </Layout>
+        <Routes>
+          <Route path="/" element={<MarketView marketplaceAddr={marketplaceAddr} />} />
+          <Route path="/my-nfts" element={<MyNFTs />} />
+        </Routes>
+
+        <Modal
+          title="Mint New NFT"
+          visible={isModalVisible}
+          onCancel={() => setIsModalVisible(false)}
+          footer={null}
+        >
+          <Form layout="vertical" onFinish={handleMintNFT}>
+            <Form.Item label="Name" name="name" rules={[{ required: true, message: "Please enter a name!" }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item label="Description" name="description" rules={[{ required: true, message: "Please enter a description!" }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item label="URI" name="uri" rules={[{ required: true, message: "Please enter a URI!" }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item label="Rarity" name="rarity" rules={[{ required: true, message: "Please select a rarity!" }]}>
+              <Select>
+                <Select.Option value={1}>Common</Select.Option>
+                <Select.Option value={2}>Uncommon</Select.Option>
+                <Select.Option value={3}>Rare</Select.Option>
+                <Select.Option value={4}>Epic</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit">
+                Mint NFT
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Layout>
+    </Router>
   );
 }
 
