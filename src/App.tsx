@@ -17,6 +17,7 @@ function App() {
   const { signAndSubmitTransaction } = useWallet();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
+  // Function to open the Mint NFT modal
   const handleMintNFTClick = () => setIsModalVisible(true);
 
   const handleMintNFT = async (values: { name: string; description: string; uri: string; rarity: number }) => {
@@ -46,7 +47,7 @@ function App() {
   return (
     <Router>
       <Layout>
-        <NavBar onMintNFTClick={handleMintNFTClick} />
+        <NavBar onMintNFTClick={handleMintNFTClick} /> {/* Pass handleMintNFTClick to NavBar */}
 
         <Routes>
           <Route path="/" element={<MarketView marketplaceAddr={marketplaceAddr} />} />
