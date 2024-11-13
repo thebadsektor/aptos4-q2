@@ -43,6 +43,12 @@ const MarketView: React.FC = () => {
   const mockNfts: NFT[] = [
     { id: 1, owner: "0x123...abc", name: "NFT 1", description: "An awesome NFT", uri: "https://fastly.picsum.photos/id/802/200/200.jpg?hmac=alfo3M8Ps4XWmFJGIwuzLUqOrwxqkE5_f65vCtk6_Iw", price: 1.5, for_sale: true, rarity: 1 },
     { id: 2, owner: "0x456...def", name: "NFT 2", description: "Another great NFT", uri: "https://fastly.picsum.photos/id/186/200/200.jpg?hmac=bNtKzMZT8HFzZq8mbTSWaQvmkX8T7TE47fspKMfxVl8", price: 2.0, for_sale: true, rarity: 2 },
+    { id: 2, owner: "0x456...def", name: "NFT 3", description: "Another great NFT", uri: "https://fastly.picsum.photos/id/255/200/200.jpg?hmac=IYQV36UT5-F1dbK_CQXF7PDfLfwcnwKijqeBCo3yMlc", price: 2.0, for_sale: true, rarity: 2 },
+    { id: 2, owner: "0x456...def", name: "NFT 4", description: "Another great NFT", uri: "https://fastly.picsum.photos/id/522/200/200.jpg?hmac=-4K81k9CA5C9S2DWiH5kP8rMvaAPk2LByYZHP9ejTjA", price: 2.0, for_sale: true, rarity: 2 },
+    { id: 2, owner: "0x456...def", name: "NFT 5", description: "Another great NFT", uri: "https://fastly.picsum.photos/id/501/200/200.jpg?hmac=tKXe69j4tHhkAA_Qc3XinkTuubEWwkFVhA9TR4TmCG8", price: 2.0, for_sale: true, rarity: 2 },
+    { id: 2, owner: "0x456...def", name: "NFT 6", description: "Another great NFT", uri: "https://fastly.picsum.photos/id/68/200/200.jpg?hmac=CPg7ZGK1PBwt6DmjjPRApX_t-mOiYxt0pel50VH4Gwk", price: 2.0, for_sale: true, rarity: 2 },
+    { id: 2, owner: "0x456...def", name: "NFT 7", description: "Another great NFT", uri: "https://fastly.picsum.photos/id/891/200/200.jpg?hmac=J19K6yDbzNDUjkInb56-h-n_xM3i40GCfHWor0YKgyU", price: 2.0, for_sale: true, rarity: 2 },
+    { id: 2, owner: "0x456...def", name: "NFT 8", description: "Another great NFT", uri: "https://fastly.picsum.photos/id/999/200/200.jpg?hmac=iwXALEStJtHL4Thxk_YbLNHNmjq9ZrIQYFUvtxndOaU", price: 2.0, for_sale: true, rarity: 2 },
   ];
 
   const handleBuyClick = (nft: NFT) => {

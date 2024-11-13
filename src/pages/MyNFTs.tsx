@@ -10,7 +10,9 @@ const MyNFTs: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const mockNFTs = [
-    { id: 1, name: "NFT 1", description: "My awesome NFT", uri: "https://fastly.picsum.photos/id/13/150/150.jpg?hmac=9Hs7x8EWUkoSin2iGPvg3BzaSRVCIsWBfJr9S9NL-3Q", rarity: 1, price: 1.5, for_sale: false },
+    { id: 1, name: "NFT 9", description: "My awesome NFT", uri: "https://fastly.picsum.photos/id/13/150/150.jpg?hmac=9Hs7x8EWUkoSin2iGPvg3BzaSRVCIsWBfJr9S9NL-3Q", rarity: 1, price: 1.5, for_sale: false },
+    { id: 1, name: "NFT 10", description: "My awesome NFT", uri: "https://fastly.picsum.photos/id/338/200/200.jpg?hmac=5S5SeR5xW8mbN3Ml7wTTJPePX392JafhcFMGm7IFNy0", rarity: 1, price: 1.5, for_sale: false },
+    { id: 1, name: "NFT 11", description: "My awesome NFT", uri: "https://fastly.picsum.photos/id/572/200/200.jpg?hmac=YFsNUCQc2Dfz_5O0HY8HmDfquz04XrdcpJ0P4Z7plRY", rarity: 1, price: 1.5, for_sale: false },
   ];
 
   const handleSellClick = (nft: any) => setIsModalVisible(true);
