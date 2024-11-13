@@ -1,59 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Layout, Typography, Menu, Space, Button, Dropdown, message } from "antd";
-import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
-import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { AptosClient } from "aptos";
-import { AccountBookOutlined, DownOutlined, LogoutOutlined } from "@ant-design/icons";
+import { DownOutlined, LogoutOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 
 const { Header } = Layout;
 const { Text } = Typography;
-
-const client = new AptosClient("https://fullnode.testnet.aptoslabs.com/v1");
 
 interface NavBarProps {
   onMintNFTClick: () => void;
 }
 
 const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
-  const { connected, account, network, disconnect } = useWallet(); // Add disconnect here
-  const [balance, setBalance] = useState<number | null>(null);
+  const [connected, setConnected] = useState(false);
+  const [balance] = useState<number | null>(100); // Mock balance data
+  const [account] = useState({ address: "0xa1b2c3d4e5f67890123456789abcdef01234567890123456789abcdef01234567" }); // Mock account data
+  const network = { name: "Testnet" }; // Mock network data
 
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (account) {
-        try {
-          const resources: any[] = await client.getAccountResources(account.address);
-          const accountResource = resources.find(
-            (r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
-          );
-          if (accountResource) {
-            const balanceValue = (accountResource.data as any).coin.value;
-            setBalance(balanceValue ? parseInt(balanceValue) / 100000000 : 0);
-          } else {
-            setBalance(0);
-          }
-        } catch (error) {
-          console.error("Error fetching balance:", error);
-        }
-      }
-    };
+  const handleLogin = () => {
+    setConnected(true);
+    message.success("Connected to wallet");
+  };
 
-    if (connected) {
-      fetchBalance();
-    }
-  }, [account, connected]);
-
-  const handleLogout = async () => {
-    try {
-      await disconnect(); // Disconnect the wallet
-      setBalance(null); // Clear balance on logout
-      message.success("Disconnected from wallet");
-    } catch (error) {
-      console.error("Error disconnecting wallet:", error);
-      message.error("Failed to disconnect from wallet");
-    }
+  const handleLogout = () => {
+    setConnected(false);
+    message.success("Disconnected from wallet");
   };
 
   return (
@@ -80,9 +50,9 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
           </Menu.Item>
         </Menu>
       </div>
-  
+
       <Space style={{ alignItems: "center" }}>
-        {connected && account ? (
+        {connected ? (
           <Dropdown
             overlay={
               <Menu>
@@ -91,7 +61,7 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
                   <Text copyable>{account.address}</Text>
                 </Menu.Item>
                 <Menu.Item key="network">
-                  <Text strong>Network:</Text> {network ? network.name : "Unknown"}
+                  <Text strong>Network:</Text> {network.name}
                 </Menu.Item>
                 <Menu.Item key="balance">
                   <Text strong>Balance:</Text> {balance !== null ? `${balance} APT` : "Loading..."}
@@ -109,7 +79,9 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
             </Button>
           </Dropdown>
         ) : (
-          <WalletSelector />
+          <Button type="primary" onClick={handleLogin}>
+            Connect Wallet
+          </Button>
         )}
       </Space>
     </Header>
